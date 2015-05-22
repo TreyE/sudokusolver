@@ -6,8 +6,6 @@ import Data.List
 import Data.Tuple
 
 data Cell = Empty Int [Int] | Entry Int Int
-type Column = [Cell]
-type Row = [Cell]
 type Board = [Cell]
 
 indexOfCell :: (Int, Int) -> Int
