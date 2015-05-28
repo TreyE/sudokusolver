@@ -1,6 +1,7 @@
 module SudokuSolver (main) where
 
-import SudokuBoard
+import SudokuSolutionMethods
+import SudokuParser
 
 main :: IO ()
 main = undefined

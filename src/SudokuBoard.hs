@@ -8,6 +8,10 @@ import Data.Tuple
 data Cell = Empty Int [Int] | Entry Int Int
 type Board = [Cell]
 
+instance Show Cell where
+  show (Empty _ rest) = "_" ++ "(" ++ (show rest)  ++ ")"
+  show (Entry _ i) = show i
+
 indexOfCell :: (Int, Int) -> Int
 indexOfCell (x,y) = x + (y * 9)
 
@@ -16,6 +20,16 @@ cellLocation i = swap $ divMod i 9
 
 cellAt :: Board -> (Int, Int) -> Cell
 cellAt b i = b !! (indexOfCell i)
+
+cellColumn :: Int -> Int
+cellColumn = snd . cellLocation
+
+cellRow :: Int -> Int
+cellRow = fst . cellLocation
+
+cellBoard :: Int -> Int
+cellBoard i = ((y `div` 3) * 3) + (x `div` 3)
+              where (x,y) = cellLocation i
 
 boardRanges :: Int -> [Int]
 boardRanges i = [(firstbox + x + (y * 9)) | y <- [0..2],  x <- [0..2]]
@@ -39,21 +53,3 @@ column = sliceCells . columnIndexRange
 
 subBoard :: Int -> Board -> [Cell]
 subBoard = sliceCells . boardRanges
-
-simplifyByElimination :: Cell -> Cell -> Cell
-simplifyByElimination en@(Entry _ _) _ = en
-simplifyByElimination en@(Empty _ _) (Empty _ _) = en
-simplifyByElimination en@(Empty idx vals) (Entry _ val) = Empty idx (delete val vals)
-
-matchableCellsFor :: Int -> Board -> [Cell]
-matchableCellsFor idx = sliceCells ((rowIndexRange idx) ++ (columnIndexRange idx) ++ (boardRanges idx))
-
-simpleReduceCell :: Board -> Cell -> Cell
-simpleReduceCell b en@(Entry _ _) = en
-simpleReduceCell b en@(Empty idx vals) = lastReduce $ foldl' (simplifyByElimination) en (matchableCellsFor idx b)
-
-lastReduce :: Cell -> Cell
-lastReduce en@(Entry _ _) = en
-lastReduce en@(Empty idx []) = en
-lastReduce (Empty idx [x]) = Entry idx x
-lastReduce (Empty idx xs) = Empty idx xs
