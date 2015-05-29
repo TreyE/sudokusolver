@@ -14,7 +14,8 @@ matchableCellsFor idx = sliceCells ((rowIndexRange (cellRow idx)) ++ (columnInde
 
 simpleReduceCell :: Board -> Cell -> Cell
 simpleReduceCell b en@(Entry _ _) = en
-simpleReduceCell b en@(Empty idx vals) = lastReduce $ foldl' (simplifyByElimination) en (matchableCellsFor idx b)
+simpleReduceCell b en@(Empty idx []) = en
+simpleReduceCell b en@(Empty idx vals) = foldl' (simplifyByElimination) en (matchableCellsFor idx b)
 
 lastReduce :: Cell -> Cell
 lastReduce en@(Entry _ _) = en
@@ -29,3 +30,15 @@ exclusionReduce :: Board -> Board
 exclusionReduce b | (boardComplexity b) == (boardComplexity result) = result
                   | otherwise = exclusionReduce result
                     where result = exclusionPass b
+
+furcateSolutions :: Board -> [Board]
+furcateSolutions b = filter validBoard (map exclusionReduce (splitOnGuess b))
+
+bruteSolve :: Board -> [Board]
+bruteSolve b = runBruteSteps [exclusionReduce b]
+
+runBruteSteps :: [Board] -> [Board]
+runBruteSteps [] = []
+runBruteSteps x | all boardComplete stepResults = stepResults
+                | otherwise = runBruteSteps stepResults
+                where stepResults = concatMap furcateSolutions x

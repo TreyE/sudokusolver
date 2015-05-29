@@ -8,9 +8,26 @@ import Data.Tuple
 data Cell = Empty Int [Int] | Entry Int Int
 type Board = [Cell]
 
+boardComplete :: Board -> Bool
+boardComplete = all isComplete
+
+splitOnGuess :: Board -> [Board]
+splitOnGuess b = splitOnGuess' b []
+
+splitOnGuess' [] bHead = [bHead]
+splitOnGuess' ((Empty i emps):xs) bHead = map (\e -> bHead ++ ((Entry i e ):xs)) emps
+splitOnGuess' (x:xs) bHead = splitOnGuess' xs (bHead ++ [x])
+
 instance Show Cell where
   show (Empty _ rest) = "_" ++ "(" ++ (show rest)  ++ ")"
   show (Entry _ i) = show i
+
+validCell :: Cell -> Bool
+validCell (Empty _ []) = False
+validCell _ = True
+
+validBoard :: Board -> Bool
+validBoard b = and (map validCell b)
 
 showCell :: Cell -> String
 showCell (Empty _ _) = "_"
