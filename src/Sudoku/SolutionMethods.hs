@@ -1,4 +1,4 @@
-module SudokuSolutionMethods
+module Sudoku.SolutionMethods
  where
 
 import SudokuBoard
@@ -24,3 +24,8 @@ lastReduce (Empty idx xs) = Empty idx xs
 
 exclusionPass :: Board -> Board
 exclusionPass b = map (\c -> simpleReduceCell b c) b
+
+exclusionReduce :: Board -> Board
+exclusionReduce b | (boardComplexity b) == (boardComplexity result) = result
+                  | otherwise = exclusionReduce result
+                    where result = exclusionPass b

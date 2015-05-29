@@ -1,6 +1,6 @@
 module SudokuSolver (main) where
 
-import SudokuSolutionMethods
+import Sudoku.SolutionMethods
 import SudokuParser
 
 main :: IO ()

@@ -12,6 +12,24 @@ instance Show Cell where
   show (Empty _ rest) = "_" ++ "(" ++ (show rest)  ++ ")"
   show (Entry _ i) = show i
 
+showCell :: Cell -> String
+showCell (Empty _ _) = "_"
+showCell (Entry _ i) = show i
+
+showBoard :: Board -> String
+showBoard b = foldl' (\x y -> x ++ (showCell y)) "" b
+
+boardComplexity :: Board -> Int
+boardComplexity = foldl' howComplexIs 0
+
+howComplexIs :: Int -> Cell -> Int
+howComplexIs i (Entry _ _ ) = i
+howComplexIs i (Empty _ rest) = i + (length rest)
+
+isComplete :: Cell -> Bool
+isComplete (Entry _ _) = True
+isComplete _ = False
+
 indexOfCell :: (Int, Int) -> Int
 indexOfCell (x,y) = x + (y * 9)
 
