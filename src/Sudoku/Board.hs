@@ -1,4 +1,4 @@
-module SudokuBoard
+module Sudoku.Board
 
 where
 
@@ -6,12 +6,19 @@ import Data.List
 import Data.Tuple
 
 data Cell = Empty Int [Int] | Entry Int Int
+data SBoard = SolvedBoard [Cell]
+             | UnsolvedBoard Bool [Cell]
 type Board = [Cell]
 
-boardComplete :: Board -> Bool
+boardComplete :: [Cell] -> Bool
 boardComplete = all isComplete
 
-splitOnGuess :: Board -> [Board]
+maybeSolve :: SBoard -> SBoard
+maybeSolve b@(SolvedBoard _) = b
+maybeSovle usb@(UnsolvedBoard v c) | (all isComplete c) = SolvedBoard c
+                                   | otherwise = usb
+
+splitOnGuess :: [Cell] -> [[Cell]]
 splitOnGuess b = splitOnGuess' b []
 
 splitOnGuess' [] bHead = [bHead]
@@ -26,17 +33,17 @@ validCell :: Cell -> Bool
 validCell (Empty _ []) = False
 validCell _ = True
 
-validBoard :: Board -> Bool
+validBoard :: [Cell] -> Bool
 validBoard b = and (map validCell b)
 
 showCell :: Cell -> String
 showCell (Empty _ _) = "_"
 showCell (Entry _ i) = show i
 
-showBoard :: Board -> String
+showBoard :: [Cell] -> String
 showBoard b = foldl' (\x y -> x ++ (showCell y)) "" b
 
-boardComplexity :: Board -> Int
+boardComplexity :: [Cell] -> Int
 boardComplexity = foldl' howComplexIs 0
 
 howComplexIs :: Int -> Cell -> Int
@@ -53,7 +60,7 @@ indexOfCell (x,y) = x + (y * 9)
 cellLocation :: Int -> (Int, Int)
 cellLocation i = swap $ divMod i 9
 
-cellAt :: Board -> (Int, Int) -> Cell
+cellAt :: [Cell] -> (Int, Int) -> Cell
 cellAt b i = b !! (indexOfCell i)
 
 cellColumn :: Int -> Int
@@ -77,14 +84,14 @@ rowIndexRange i = map indexOfCell [(i, j) | j <- [0..8]]
 columnIndexRange :: Int -> [Int]
 columnIndexRange i = map indexOfCell [(j, i) | j <- [0..8]]
 
-sliceCells :: [Int] -> Board -> [Cell]
+sliceCells :: [Int] -> [Cell] -> [Cell]
 sliceCells i b = map (b !!) i
 
-row :: Int -> Board -> [Cell]
+row :: Int -> [Cell] -> [Cell]
 row = sliceCells . rowIndexRange
 
-column :: Int -> Board -> [Cell]
+column :: Int -> [Cell] -> [Cell]
 column = sliceCells . columnIndexRange
 
-subBoard :: Int -> Board -> [Cell]
+subBoard :: Int -> [Cell] -> [Cell]
 subBoard = sliceCells . boardRanges

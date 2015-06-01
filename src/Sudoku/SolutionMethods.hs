@@ -1,7 +1,7 @@
 module Sudoku.SolutionMethods
  where
 
-import SudokuBoard
+import Sudoku.Board
 import Data.List
 
 simplifyByElimination :: Cell -> Cell -> Cell

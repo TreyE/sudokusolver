@@ -2,7 +2,7 @@ module SudokuParser(
   parse
 ) where
 
-import SudokuBoard
+import Sudoku.Board
 import Data.Char(isDigit, digitToInt)
 import Data.List
 
