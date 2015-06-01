@@ -7,7 +7,7 @@ import Data.Tuple
 
 data Cell = Empty Int [Int] | Entry Int Int
 data Board = SolvedBoard [Cell]
-             | UnsolvedBoard Bool [Cell]
+             | UnsolvedBoard [Cell]
 
 instance Show Board where
   show = boardToString
@@ -18,7 +18,7 @@ endOfLineCell (Entry i _) = i `mod` 9 == 8
 
 boardToString :: Board -> String
 boardToString (SolvedBoard cs) = foldl' showCurrentCell "\n" cs
-boardToString (UnsolvedBoard _ cs) = foldl' showCurrentCell "\n" cs
+boardToString (UnsolvedBoard cs) = foldl' showCurrentCell "\n" cs
 
 showCurrentCell :: String -> Cell -> String
 showCurrentCell s c | endOfLineCell c = s ++ (show c) ++ "\n"
@@ -30,17 +30,8 @@ boardComplete _ = False
 
 maybeSolve :: Board -> Board
 maybeSolve b@(SolvedBoard _) = b
-maybeSolve usb@(UnsolvedBoard False c) = usb
-maybeSolve usb@(UnsolvedBoard True c) | (all isComplete c) = SolvedBoard c
+maybeSolve usb@(UnsolvedBoard c) | (all isComplete c) = SolvedBoard c
     | otherwise = usb
-
-markValidity :: Board -> Board
-markValidity vb@(SolvedBoard _) = vb
-markValidity vb@(UnsolvedBoard _ cells) = UnsolvedBoard (validBoard cells) cells
-
-isBoardValid :: Board -> Bool
-isBoardValid (UnsolvedBoard v _) = v
-isBoardValid _ = True
 
 splitOnGuess :: [Cell] -> [[Cell]]
 splitOnGuess b = splitOnGuess' b []
@@ -69,7 +60,7 @@ showBoard b = foldl' (\x y -> x ++ (showCell y)) "" b
 
 boardComplexity :: Board -> Int
 boardComplexity (SolvedBoard _) = 0
-boardComplexity (UnsolvedBoard v b) = foldl' howComplexIs 0 b
+boardComplexity (UnsolvedBoard b) = foldl' howComplexIs 0 b
 
 howComplexIs :: Int -> Cell -> Int
 howComplexIs i (Entry _ _ ) = i

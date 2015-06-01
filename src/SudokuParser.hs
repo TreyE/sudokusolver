@@ -16,7 +16,7 @@ cleanInput :: String -> String
 cleanInput = filter (filterFun)
 
 constructBoard :: String -> Maybe Board
-constructBoard x | (length x) == 81 = Just $ UnsolvedBoard True (toCells x)
+constructBoard x | (length x) == 81 = Just $ UnsolvedBoard (toCells x)
                  | otherwise = Nothing
 
 toCells :: String -> [Cell]

@@ -1,45 +1,46 @@
 module Sudoku.SolutionMethods
+(bruteSolve)
  where
 
 import Sudoku.Board
 import Data.List
+import Data.Maybe
 
-simplifyByElimination :: Cell -> Cell -> Cell
-simplifyByElimination en@(Entry _ _) _ = en
-simplifyByElimination en@(Empty _ _) (Empty _ _) = en
-simplifyByElimination en@(Empty idx vals) (Entry _ val) = Empty idx (delete val vals)
+simplifyByElimination :: Maybe Cell -> Cell -> Maybe Cell
+simplifyByElimination Nothing _ = Nothing
+simplifyByElimination en@(Just (Entry _ _)) _ = en
+simplifyByElimination en@(Just (Empty _ _)) (Empty _ _) = en
+simplifyByElimination (Just (Empty idx vals)) (Entry _ val) = let remaining = delete val vals in
+                                                                 case remaining of
+                                                                   [] -> Nothing
+                                                                   otherwise -> Just (Empty idx remaining)
 
 matchableCellsFor :: Int -> [Cell] -> [Cell]
-matchableCellsFor idx = sliceCells ((rowIndexRange (cellRow idx)) ++ (columnIndexRange (cellColumn idx)) ++ (boardRanges (cellBoard idx)))
+matchableCellsFor idx = sliceCells (nub ((rowIndexRange (cellRow idx)) ++ (columnIndexRange (cellColumn idx)) ++ (boardRanges (cellBoard idx))))
 
-simpleReduceCell :: [Cell] -> Cell -> Cell
-simpleReduceCell b en@(Entry _ _) = en
-simpleReduceCell b en@(Empty idx []) = en
-simpleReduceCell b en@(Empty idx vals) = foldl' (simplifyByElimination) en (matchableCellsFor idx b)
+simpleReduceCell :: [Cell] -> Cell -> Maybe Cell
+simpleReduceCell b en@(Entry _ _) = Just en
+simpleReduceCell b en@(Empty idx []) = Nothing
+simpleReduceCell b en@(Empty idx vals) = foldl' (simplifyByElimination) (Just en) (matchableCellsFor idx b)
 
-lastReduce :: Cell -> Cell
-lastReduce en@(Entry _ _) = en
-lastReduce en@(Empty idx []) = en
-lastReduce (Empty idx [x]) = Entry idx x
-lastReduce (Empty idx xs) = Empty idx xs
+exclusionPass :: [Cell] -> Maybe [Cell] 
+exclusionPass b = sequence $ map (\c -> simpleReduceCell b c) b
 
-exclusionPass :: [Cell] -> [Cell] 
-exclusionPass b = map (\c -> simpleReduceCell b c) b
-
-exclusionReduce :: Board -> Board
-exclusionReduce sb@(SolvedBoard _) = sb
-exclusionReduce nvb@(UnsolvedBoard False b) = nvb
-exclusionReduce usb@(UnsolvedBoard True b) | (boardComplexity usb) == (boardComplexity result) = result
-                                       | otherwise = exclusionReduce result
-                                         where result = (maybeSolve . markValidity) (UnsolvedBoard True (exclusionPass b))
+exclusionReduce :: Board -> Maybe Board
+exclusionReduce sb@(SolvedBoard _) = Just sb
+exclusionReduce usb@(UnsolvedBoard b) = let reduction = fmap (maybeSolve . UnsolvedBoard) (exclusionPass b) in
+                                            case reduction of
+                                              Nothing -> Nothing
+                                              Just (SolvedBoard x) -> Just (SolvedBoard x)
+                                              Just y -> if ((boardComplexity y) == (boardComplexity usb)) then reduction else exclusionReduce y
+                                              
 
 furcateSolutions :: Board -> [Board]
 furcateSolutions sb@(SolvedBoard _) = [sb]
-furcateSolutions (UnsolvedBoard False b) = []
-furcateSolutions (UnsolvedBoard True b) = filter isBoardValid (map (\x -> exclusionReduce (UnsolvedBoard True x)) (splitOnGuess b))
+furcateSolutions (UnsolvedBoard b) = catMaybes (map (\x -> exclusionReduce (UnsolvedBoard x)) (splitOnGuess b))
 
 bruteSolve :: Board -> [Board]
-bruteSolve b = runBruteSteps [exclusionReduce b]
+bruteSolve b = runBruteSteps [b]
 
 runBruteSteps :: [Board] -> [Board]
 runBruteSteps [] = []
