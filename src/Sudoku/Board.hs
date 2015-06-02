@@ -1,5 +1,7 @@
 module Sudoku.Board
-
+(Cell(Empty,Entry),Board(SolvedBoard,UnsolvedBoard),maybeSolve,cellColumn,cellRow,boardRanges,
+cellBoard,boardComplete,splitOnGuess,boardComplexity,sliceCells,rowIndexRange,columnIndexRange,cellPos
+)
 where
 
 import Data.List
@@ -11,6 +13,10 @@ data Board = SolvedBoard [Cell]
 
 instance Show Board where
   show = boardToString
+
+cellPos :: Cell -> Int
+cellPos (Empty i _) = i
+cellPos (Entry i _) = i
 
 endOfLineCell :: Cell -> Bool
 endOfLineCell (Empty i _) = i `mod` 9 == 8
@@ -33,12 +39,24 @@ maybeSolve b@(SolvedBoard _) = b
 maybeSolve usb@(UnsolvedBoard c) | (all isComplete c) = SolvedBoard c
     | otherwise = usb
 
-splitOnGuess :: [Cell] -> [[Cell]]
-splitOnGuess b = splitOnGuess' b []
+splitOnGuess :: [Cell] -> Int -> [[Cell]]
+splitOnGuess b i = map (\x -> h ++ ((Entry i x):t)) emps
+                     where (Empty _ emps) = b !! i
+                           h = take i b
+                           t = drop (i + 1) b
 
-splitOnGuess' [] bHead = [bHead]
-splitOnGuess' ((Empty i emps):xs) bHead = map (\e -> bHead ++ ((Entry i e ):xs)) emps
-splitOnGuess' (x:xs) bHead = splitOnGuess' xs (bHead ++ [x])
+instance Eq Cell where
+  (Entry _ _) == (Empty _ _) = False
+  (Empty _ _) == (Entry _ _) = False
+  (Entry ia a) == (Entry ib b) = (a == b) && (ia == ib)
+  (Empty ia a) == (Empty ib b) = (a == b) && (ia == ib)
+
+instance Ord Cell where
+  (Entry ia a) <= (Entry ib b) = ia <= ib
+  (Empty _ _) <= (Entry _ _) = True
+  (Entry _ _) <= (Empty _ _) = False
+  (Empty ia a) <= (Empty ib b) | (length a) == (length b) = ia <= ib
+                               | otherwise = (length a) <= (length b)
 
 instance Show Cell where
   show (Empty _ rest) = "_" ++ "(" ++ (show rest)  ++ ")"
