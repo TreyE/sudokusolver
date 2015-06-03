@@ -1,6 +1,6 @@
 module Sudoku.Board
-(Cell(Empty,Entry),Board(SolvedBoard,UnsolvedBoard),maybeSolve,cellColumn,cellRow,boardRanges,
-cellBoard,boardComplete,splitOnGuess,boardComplexity,sliceCells,rowIndexRange,columnIndexRange,cellPos
+(Cell(Empty,Entry),Board(SolvedBoard,UnsolvedBoard),maybeSolve,cellColumn,cellRow,
+cellBoard,boardComplete,splitOnGuess,boardComplexity,sliceCells,cellPos
 )
 where
 
