@@ -17,7 +17,7 @@ simplifyByElimination (Empty idx vals) (Entry _ val)  = let remaining = delete v
                                                               otherwise -> Just (Empty idx remaining)
 
 matchableCellIndexes :: Int -> [Int]
-matchableCellIndexes idx = (nub ((rowIndexRange (cellRow idx)) ++ (columnIndexRange (cellColumn idx)) ++ (boardRanges (cellBoard idx))))
+matchableCellIndexes idx = delete idx (nub ((rowIndexRange (cellRow idx)) ++ (columnIndexRange (cellColumn idx)) ++ (boardRanges (cellBoard idx))))
 
 matchableCellsFor :: Int -> [Cell] -> [Cell]
 matchableCellsFor idx = sliceCells (matchableCellIndexes idx)
@@ -27,21 +27,25 @@ simpleReduceCell b en@(Entry _ _) = return en
 simpleReduceCell b en@(Empty idx []) = Nothing
 simpleReduceCell b en@(Empty idx vals) = foldM (simplifyByElimination) en (matchableCellsFor idx b)
 
+shortMapMaybe :: (a -> Maybe b) -> [a] -> Maybe [b]
+shortMapMaybe f [] = Just []
+shortMapMaybe f a = foldM (\x y -> fmap (\g -> x `seq` (x ++ [g])) (f y)) [] a
+
 exclusionPass :: [Cell] -> Maybe [Cell] 
-exclusionPass b = mapM (\c -> simpleReduceCell b c) b
+exclusionPass b = shortMapMaybe (\c -> simpleReduceCell b c) b
 
 exclusionReduce :: Board -> Maybe Board
 exclusionReduce sb@(SolvedBoard _) = return sb
-exclusionReduce usb@(UnsolvedBoard b) = let reduction = fmap (maybeSolve . UnsolvedBoard) (exclusionPass b) in
+exclusionReduce usb@(UnsolvedBoard b) = (fmap (maybeSolve . UnsolvedBoard) (exclusionPass b)) >>= (\reduction ->
                                             case reduction of
-                                              Nothing -> Nothing
-                                              Just (SolvedBoard x) -> return (SolvedBoard x)
-                                              Just y -> if ((boardComplexity y) == (boardComplexity usb)) then reduction else exclusionReduce y
+                                              (SolvedBoard x) -> return (SolvedBoard x)
+                                              otherwise -> if ((boardComplexity reduction) == (boardComplexity usb)) then return reduction else exclusionReduce reduction)
                                               
+
 
 furcateSolutions :: Board -> [Board]
 furcateSolutions sb@(SolvedBoard _) = [sb]
-furcateSolutions (UnsolvedBoard b) = catMaybes (map (\x -> exclusionReduce (UnsolvedBoard x)) (splitOnGuess b (guessSplit b)))
+furcateSolutions (UnsolvedBoard b) = (mapMaybe (\x -> exclusionReduce (UnsolvedBoard x)) (splitOnGuess b (guessSplit b)))
 
 guessSplit :: [Cell] -> Int
 guessSplit = cellPos . minimum
