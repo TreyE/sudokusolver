@@ -5,6 +5,7 @@ module SudokuParser(
 import Sudoku.Board
 import Data.Char(isDigit, digitToInt)
 import Data.List
+import qualified Data.Vector as V
 
 parse :: String -> Maybe Board
 parse = constructBoard . cleanInput
@@ -16,7 +17,7 @@ cleanInput :: String -> String
 cleanInput = filter (filterFun)
 
 constructBoard :: String -> Maybe Board
-constructBoard x | (length x) == 81 = Just $ UnsolvedBoard (toCells x)
+constructBoard x | (length x) == 81 = Just $ UnsolvedBoard (V.fromList $ toCells x)
                  | otherwise = Nothing
 
 toCells :: String -> [Cell]

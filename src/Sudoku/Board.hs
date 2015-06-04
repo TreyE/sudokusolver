@@ -6,10 +6,11 @@ where
 
 import Data.List
 import Data.Tuple
+import qualified Data.Vector as V
 
 data Cell = Empty Int [Int] | Entry Int Int
-data Board = SolvedBoard [Cell]
-             | UnsolvedBoard [Cell]
+data Board = SolvedBoard (V.Vector Cell)
+             | UnsolvedBoard (V.Vector Cell)
 
 instance Show Board where
   show = boardToString
@@ -23,8 +24,8 @@ endOfLineCell (Empty i _) = i `mod` 9 == 8
 endOfLineCell (Entry i _) = i `mod` 9 == 8
 
 boardToString :: Board -> String
-boardToString (SolvedBoard cs) = foldl' showCurrentCell "\n" cs
-boardToString (UnsolvedBoard cs) = foldl' showCurrentCell "\n" cs
+boardToString (SolvedBoard cs) = V.foldl' showCurrentCell "\n" cs
+boardToString (UnsolvedBoard cs) = V.foldl' showCurrentCell "\n" cs
 
 showCurrentCell :: String -> Cell -> String
 showCurrentCell s c | endOfLineCell c = s ++ (show c) ++ "\n"
@@ -36,14 +37,14 @@ boardComplete _ = False
 
 maybeSolve :: Board -> Board
 maybeSolve b@(SolvedBoard _) = b
-maybeSolve usb@(UnsolvedBoard c) | (all isComplete c) = SolvedBoard c
+maybeSolve usb@(UnsolvedBoard c) | (V.all isComplete c) = SolvedBoard c
     | otherwise = usb
 
-splitOnGuess :: [Cell] -> Int -> [[Cell]]
+splitOnGuess :: V.Vector Cell -> Int -> [[Cell]]
 splitOnGuess b i = map (\x -> h ++ ((Entry i x):t)) emps
-                     where (Empty _ emps) = b !! i
-                           h = take i b
-                           t = drop (i + 1) b
+                     where (Empty _ emps) = b V.! i
+                           h = V.toList (V.take i b)
+                           t = V.toList (V.drop (i + 1) b)
 
 instance Eq Cell where
   (Entry _ _) == (Empty _ _) = False
@@ -78,7 +79,7 @@ showBoard b = foldl' (\x y -> x ++ (showCell y)) "" b
 
 boardComplexity :: Board -> Int
 boardComplexity (SolvedBoard _) = 0
-boardComplexity (UnsolvedBoard b) = foldl' howComplexIs 0 b
+boardComplexity (UnsolvedBoard b) = V.foldl' howComplexIs 0 b
 
 howComplexIs :: Int -> Cell -> Int
 howComplexIs i (Entry _ _ ) = i
@@ -118,14 +119,14 @@ rowIndexRange i = map indexOfCell [(i, j) | j <- [0..8]]
 columnIndexRange :: Int -> [Int]
 columnIndexRange i = map indexOfCell [(j, i) | j <- [0..8]]
 
-sliceCells :: [Int] -> [Cell] -> [Cell]
-sliceCells i b = map (b !!) i
+sliceCells :: [Int] -> V.Vector Cell -> V.Vector Cell
+sliceCells i b = V.map (b V.!) (V.fromList i)
 
-row :: Int -> [Cell] -> [Cell]
+row :: Int -> V.Vector Cell -> V.Vector Cell
 row = sliceCells . rowIndexRange
 
-column :: Int -> [Cell] -> [Cell]
+column :: Int -> V.Vector Cell -> V.Vector Cell
 column = sliceCells . columnIndexRange
 
-subBoard :: Int -> [Cell] -> [Cell]
+subBoard :: Int -> V.Vector Cell -> V.Vector Cell
 subBoard = sliceCells . boardRanges
